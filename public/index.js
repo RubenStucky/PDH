@@ -272,11 +272,23 @@ function distributeChores(chores) {
         if (chore.frequency === '1' || chore.frequency === undefined) {
             return true;
         }
-        if (chore.frequency === '2' && setWeekNum % 2 !== 0) {
-            return true;
+        if (chore.frequency === '2') {
+            if (chore.week === 1) {
+                return setWeekNum % 2 === 0;
+
+            }
+            if (chore.week === 2) {
+                return setWeekNum % 2 !== 0;
+            }
         }
-        if (chore.frequency === '4' && setWeekNum % 4 === 0) {
-            return true;
+        if (chore.frequency === '4') {
+            if (chore.week === 1) {
+                return setWeekNum % 4 === 0;
+
+            }
+            if (chore.week === 2) {
+                return (setWeekNum % 4 !== 0) && (setWeekNum % 2 === 0);
+            }
         }
 
         return false;

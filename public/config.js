@@ -110,19 +110,6 @@ function displayTasks(tasks) {
     });
 }
 
-document.querySelector(".add-task-btn").addEventListener("click", async () => {
-    const newItem = document.querySelector("#edit-task-name").value
-    const newFrequency = document.querySelector("#frequency").value
-
-    await addDoc(colRefChores, {
-        chore: newItem,
-        frequency: newFrequency,
-        lastDone: ''
-    })
-
-    await getSavedWeeks(newItem);
-});
-
 // Get the input field
 const input = document.querySelector("#edit-task-name");
 
@@ -136,77 +123,223 @@ input.addEventListener("keypress", async function (event) {
         const newItem = document.querySelector("#edit-task-name").value
         const newFrequency = document.querySelector("#frequency").value
 
+        let tasks = [];
+
+        getDocs(colRefChores)
+            .then((snapshot) => {
+
+                const doc = snapshot.docs;
+
+                doc.forEach((doc) => {
+                    tasks.push({ ...doc.data(), id: doc.id })
+                })
+                updateTaskList(tasks, newItem, newFrequency);
+            })
+            .catch ((error) => {
+                console.log(error);
+            });
+    }
+});
+
+document.querySelector(".add-task-btn").addEventListener("click", async () => {
+    const newItem = document.querySelector("#edit-task-name").value
+    const newFrequency = document.querySelector("#frequency").value
+
+    let tasks = [];
+
+    getDocs(colRefChores)
+        .then((snapshot) => {
+
+            const doc = snapshot.docs;
+
+            doc.forEach((doc) => {
+                tasks.push({ ...doc.data(), id: doc.id })
+            })
+
+            updateTaskList(tasks, newItem, newFrequency);
+        })
+        .catch ((error) => {
+            console.log(error);
+        });
+});
+
+async function updateTaskList(tasks, newItem, newFrequency) {
+    let countWeekOne = 0;
+    let countWeekTwo = 0;
+
+    let countWeekOneMonthly = 0;
+    let countWeekTwoMonthly = 0;
+
+    tasks.forEach((task) => {
+        if (task.frequency === '2') {
+            if (task.week === 1) {
+                countWeekOne++;
+            } else if (task.week === 2) {
+                countWeekTwo++;
+            }
+        }
+
+        if (task.frequency === '4') {
+            if (task.week === 1) {
+                countWeekOneMonthly++;
+            } else if (task.week === 2) {
+                countWeekTwoMonthly++;
+            }
+        }
+    });
+
+    if (newFrequency === '2') {
+        console.log(countWeekOne, countWeekTwo);
+        if (countWeekOne === countWeekTwo) {
+            console.log('equal');
+            await addDoc(colRefChores, {
+                chore: newItem,
+                frequency: newFrequency,
+                lastDone: '',
+                week: 1
+            })
+            await getSavedWeeks(newItem, newFrequency, 1);
+        } else if (countWeekOne < countWeekTwo) {
+            console.log('week one smaller');
+            await addDoc(colRefChores, {
+                chore: newItem,
+                frequency: newFrequency,
+                lastDone: '',
+                week: 1
+            })
+            await getSavedWeeks(newItem, newFrequency, 1);
+        } else if (countWeekOne > countWeekTwo) {
+            console.log('week two smaller');
+            await addDoc(colRefChores, {
+                chore: newItem,
+                frequency: newFrequency,
+                lastDone: '',
+                week: 2
+            })
+            await getSavedWeeks(newItem, newFrequency, 2);
+        }
+    } else if (newFrequency === '4') {
+        if (countWeekOneMonthly === countWeekTwoMonthly) {
+            await addDoc(colRefChores, {
+                chore: newItem,
+                frequency: newFrequency,
+                lastDone: '',
+                week: 1
+            })
+            await getSavedWeeks(newItem, newFrequency, 1);
+        } else if (countWeekOneMonthly < countWeekTwoMonthly) {
+            await addDoc(colRefChores, {
+                chore: newItem,
+                frequency: newFrequency,
+                lastDone: '',
+                week: 1
+            })
+            await getSavedWeeks(newItem, newFrequency, 1);
+        } else if (countWeekOneMonthly > countWeekTwoMonthly) {
+            await addDoc(colRefChores, {
+                chore: newItem,
+                frequency: newFrequency,
+                lastDone: '',
+                week: 2
+            })
+            await getSavedWeeks(newItem, newFrequency, 2);
+        }
+    } else {
         await addDoc(colRefChores, {
             chore: newItem,
             frequency: newFrequency,
             lastDone: ''
         })
-
-        await getSavedWeeks(newItem);
     }
-});
+}
 
-function addTaskToRenderedWeeks(savedWeeks, newItem) {
+function addTaskToRenderedWeeks(savedWeeks, newItem, newFrequency, week) {
     savedWeeks.forEach((savedWeek) => {
-        if (savedWeek.weekNum >= getWeekNumber(new Date())) {
-            let countRuben = 0;
-            let countJulia = 0;
-            let countAnnabel = 0;
+        if (addToThisWeek(newFrequency, week, savedWeek.weekNum)) {
+            if (savedWeek.weekNum >= getWeekNumber(new Date())) {
+                let countRuben = 0;
+                let countJulia = 0;
+                let countAnnabel = 0;
 
-            const names = ["Ruben", "Julia", "Annabel"];
+                const names = ["Ruben", "Julia", "Annabel"];
 
-            for (const key in savedWeek) {
-                if (savedWeek[key].assignedTo === "Ruben") {
-                    countRuben++;
+                for (const key in savedWeek) {
+                    if (savedWeek[key].assignedTo === "Ruben") {
+                        countRuben++;
+                    }
+                    if (savedWeek[key].assignedTo === "Julia") {
+                        countJulia++;
+                    }
+                    if (savedWeek[key].assignedTo === "Annabel") {
+                        countAnnabel++;
+                    }
                 }
-                if (savedWeek[key].assignedTo === "Julia") {
-                    countJulia++;
+
+                if (countRuben === countJulia && countJulia === countAnnabel) {
+                    const randomName = names[getRandomInt(0, 3)];
+
+                    updateDatabase(randomName, newItem, savedWeek.id);
                 }
-                if (savedWeek[key].assignedTo === "Annabel") {
-                    countAnnabel++;
+                else if (countRuben === countAnnabel && countRuben < countJulia) {
+                    const names = ["Ruben", "Annabel"];
+                    const randomName = names[getRandomInt(0, 2)];
+
+                    updateDatabase(randomName, newItem, savedWeek.id);
                 }
-            }
+                else if (countRuben === countJulia && countRuben < countAnnabel) {
+                    const names = ["Ruben", "Julia"];
+                    const randomName = names[getRandomInt(0, 2)];
 
-            console.log(countJulia, countAnnabel, countRuben);
-
-            if (countRuben === countJulia && countJulia === countAnnabel) {
-                const randomName = names[getRandomInt(0, 3)];
-
-                updateDatabase(randomName, newItem, savedWeek.id);
-            }
-            else if (countRuben === countAnnabel && countRuben < countJulia) {
-                const names = ["Ruben", "Annabel"];
-                const randomName = names[getRandomInt(0, 2)];
-
-                updateDatabase(randomName, newItem, savedWeek.id);
-            }
-            else if (countRuben === countJulia && countRuben < countAnnabel) {
-                const names = ["Ruben", "Julia"];
-                const randomName = names[getRandomInt(0, 2)];
-
-                updateDatabase(randomName, newItem, savedWeek.id);
-            }
-            else if (countAnnabel === countJulia && countAnnabel < countRuben) {
-                const names = ["Annabel", "Julia"];
-                const randomName = names[getRandomInt(0, 2)];
-
-                updateDatabase(randomName, newItem, savedWeek.id);
-            }
-            else {
-                const smallestCount = Math.min(countRuben, countJulia, countAnnabel);
-
-                if (smallestCount === countJulia) {
-                    updateDatabase('Julia', newItem, savedWeek.id);
+                    updateDatabase(randomName, newItem, savedWeek.id);
                 }
-                else if (smallestCount === countAnnabel) {
-                    updateDatabase('Annabel', newItem, savedWeek.id);
+                else if (countAnnabel === countJulia && countAnnabel < countRuben) {
+                    const names = ["Annabel", "Julia"];
+                    const randomName = names[getRandomInt(0, 2)];
+
+                    updateDatabase(randomName, newItem, savedWeek.id);
                 }
-                else if (smallestCount === countRuben) {
-                    updateDatabase('Ruben', newItem, savedWeek.id);
+                else {
+                    const smallestCount = Math.min(countRuben, countJulia, countAnnabel);
+
+                    if (smallestCount === countJulia) {
+                        updateDatabase('Julia', newItem, savedWeek.id);
+                    }
+                    else if (smallestCount === countAnnabel) {
+                        updateDatabase('Annabel', newItem, savedWeek.id);
+                    }
+                    else if (smallestCount === countRuben) {
+                        updateDatabase('Ruben', newItem, savedWeek.id);
+                    }
                 }
             }
         }
     });
+}
+
+function addToThisWeek(frequency, week, setWeekNum) {
+    if (frequency === '1' || frequency === undefined) {
+        return true;
+    }
+    if (frequency === '2') {
+        if (week === 1) {
+            return setWeekNum % 2 === 0;
+
+        }
+        if (week === 2) {
+            return setWeekNum % 2 !== 0;
+        }
+    }
+    if (frequency === '4') {
+        if (week === 1) {
+            return setWeekNum % 4 === 0;
+
+        }
+        if (week === 2) {
+            return (setWeekNum % 4 !== 0) && (setWeekNum % 2 === 0);
+        }
+    }
+
+    return false;
 }
 
 async function updateDatabase(name, item, weekId) {
@@ -243,7 +376,7 @@ function getWeekNumber(d) {
     return weekNo;
 }
 
-function getSavedWeeks(newItem) {
+function getSavedWeeks(newItem, newFrequency, week) {
     const colRef = collection(db, 'savedWeeks')
 
     getDocs(colRef)
@@ -255,7 +388,7 @@ function getSavedWeeks(newItem) {
             doc.forEach((doc) => {
                 savedWeeks.push({ ...doc.data(), id: doc.id })
             })
-            addTaskToRenderedWeeks(savedWeeks, newItem);
+            addTaskToRenderedWeeks(savedWeeks, newItem, newFrequency, week);
         })
         .catch ((error) => {
             console.log(error);
