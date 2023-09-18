@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Welcome to Firebase Hosting</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <!-- Update the version number as needed -->
+  <script defer src="/__/firebase/10.4.0/firebase-app-compat.js"></script>
+  <!-- Include only the Firebase features as you need -->
+  <script defer src="/__/firebase/10.4.0/firebase-auth-compat.js"></script>
+  <script defer src="/__/firebase/10.4.0/firebase-database-compat.js"></script>
+  <script defer src="/__/firebase/10.4.0/firebase-firestore-compat.js"></script>
+  <script defer src="/__/firebase/10.4.0/firebase-functions-compat.js"></script>
+  <script defer src="/__/firebase/10.4.0/firebase-messaging-compat.js"></script>
+  <script defer src="/__/firebase/10.4.0/firebase-storage-compat.js"></script>
+  <script defer src="/__/firebase/10.4.0/firebase-analytics-compat.js"></script>
+  <script defer src="/__/firebase/10.4.0/firebase-remote-config-compat.js"></script>
+  <script defer src="/__/firebase/10.4.0/firebase-performance-compat.js"></script>
+  <!--
+    Initialize the SDK after all desired features are loaded, set useEmulator to false
+    to avoid connecting the SDK to running emulators.
+  -->
+  <script defer src="/__/firebase/init.js?useEmulator=true"></script>
+
+  <style media="screen">
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      margin: 0;
+      padding: 0;
+    }
+
+    .title {
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .schedule {
+      display: flex;
+      flex-wrap: wrap; /* Allow cards to wrap to a new row */
+      margin: 20px;
+    }
+
+    .person-card {
+      flex: 1; /* Expand to fill available space */
+      margin: 10px; /* Add spacing between cards */
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .person-card h2 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .chore {
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin: 5px;
+      background-color: #fff;
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Style for the navigation icons */
+    .prevWeek,
+    .nextWeek {
+      font-size: 24px;
+      text-align: center;
+      cursor: pointer;
+      margin: 10px;
+    }
+
+    .this-week {
+      text-align: center;
+      color: green;
+      margin: 10px;
+    }
+
+    /* Style for the "Add Chore" button */
+    .addChore {
+      text-align: center;
+      margin: 20px;
+    }
+
+    .button-18 {
+      align-items: center;
+      background-color: green;
+      border: 0;
+      border-radius: 100px;
+      box-sizing: border-box;
+      color: #ffffff;
+      cursor: pointer;
+      display: inline-flex;
+      font-family: -apple-system, system-ui, system-ui, "Segoe UI", Roboto, "Helvetica Neue", "Fira Sans", Ubuntu, Oxygen, "Oxygen Sans", Cantarell, "Droid Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Lucida Grande", Helvetica, Arial, sans-serif;
+      font-size: 10px;
+      font-weight: 600;
+      justify-content: center;
+      line-height: 20px;
+      max-width: 200px;
+      min-height: 40px;
+      min-width: 0px;
+      overflow: hidden;
+      padding: 0px;
+      padding-left: 20px;
+      padding-right: 20px;
+      text-align: center;
+      touch-action: manipulation;
+      transition: background-color 0.167s cubic-bezier(0.4, 0, 0.2, 1) 0s, box-shadow 0.167s cubic-bezier(0.4, 0, 0.2, 1) 0s, color 0.167s cubic-bezier(0.4, 0, 0.2, 1) 0s;
+      user-select: none;
+      -webkit-user-select: none;
+      vertical-align: middle;
+    }
+
+    .button-18:hover,
+    .button-18:focus {
+      background-color: #16437E;
+      color: #ffffff;
+    }
+
+    .button-18:active {
+      background: #09223b;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .button-18:disabled {
+      cursor: not-allowed;
+      background: rgba(0, 0, 0, 0.08);
+      color: rgba(0, 0, 0, 0.3);
+    }
+
+    .red {
+      color: red;
+    }
+
+    /* Media query for screens smaller than 768px (typical mobile screens) */
+    @media screen and (max-width: 768px) {
+      .schedule {
+        flex-direction: column; /* Stack cards in a column on smaller screens */
+      }
+    }
+
+    .hide{
+      display: none;
+    }
+  </style>
+</head>
+<body>
+<h1 class="title">Week</h1>
+<center>
+  <i class='far fa-arrow-alt-circle-left prevWeek'></i>
+  <i class='far fa-arrow-alt-circle-right nextWeek'></i>
+  <p class="this-week" style="color: green"></p>
+  <h2><i class="fas fa-exclamation-circle warning-message hide" style="color: red; font-size: 24px; cursor: pointer;"></i></h2>
+</center>
+<div class="schedule" id="schedule">
+  <!-- Chore data will be dynamically added here -->
+</div>
+<div class="addChore">
+  <a href="/config.html"><button class="button-18">Taken toevoegen of verwijderen</button></a>
+</div>
+<script src="/index.js" type="module"></script>
+</body>
+</html>
